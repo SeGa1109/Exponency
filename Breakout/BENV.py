@@ -4,8 +4,9 @@ import yfinance as yf
 from datetime import datetime as ddt
 import datetime as dt
 import pandas_ta as ta
-
-
+import numpy as np
+import time
+import pywhatkit
 
 YFdateform = "%Y-%m-%d"
 C_Date = ddt.now()
@@ -66,7 +67,7 @@ def Get_RSI(scrip, datval):
 
     rs = avg_gain / avg_loss
     rsi = round(100 - (100 / (1 + rs)),1)
-
+    # print(rsi)
     return rsi.iloc[-1]
 
 def Max_Price(Scrip, start, end, intvl):
@@ -74,3 +75,33 @@ def Max_Price(Scrip, start, end, intvl):
     data = yf.Ticker(Scrip).history(start=start, end=end, interval=intvl)
     return round(data['Close'].max(),2)
 
+# Get_RSI("TCS.NS",ddt.now())
+
+def Fetch_Graph_Data(Scrip,intvl,Chart_Sel):
+
+    if intvl == '1d':
+        start_date = (ddt.now() - dt.timedelta(days=300)).strftime(YFdateform)
+        end_date = (ddt.now() - dt.timedelta(days=-1)).strftime(YFdateform)
+        data = yf.Ticker(Scrip).history(start=start_date, end=end_date, interval=intvl)
+
+    if intvl == '1h':
+        start_date = (ddt.now() - dt.timedelta(days=5)).strftime(YFdateform)
+        end_date = (ddt.now() - dt.timedelta(days=-1)).strftime(YFdateform)
+        data = yf.Ticker(Scrip).history(start=start_date, end=end_date, interval=intvl)
+
+    data.index = pd.to_datetime(data.index).tz_localize(None)
+    period = 14
+    delta = data['Close'].diff()
+    gain = delta.where(delta > 0, 0.0)
+    loss = -delta.where(delta < 0, 0.0)
+
+    avg_gain = gain.ewm(alpha=1 / period, min_periods=period, adjust=False).mean()
+    avg_loss = loss.ewm(alpha=1 / period, min_periods=period, adjust=False).mean()
+
+    rs = avg_gain / avg_loss
+    data['RSI'] = round(100 - (100 / (1 + rs)),1)
+
+
+
+    # print(data)
+    return data
