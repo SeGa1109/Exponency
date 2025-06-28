@@ -52,9 +52,7 @@ def format_days(val):
         return f"🌳 {val:}"
 
 def Fetch_Data():
-    df = pd.read_csv(fr'D:\Exponency\RSI Breakout\RSI_Watchlist.csv')
-
-    print("XX")
+    df = pd.read_csv(fr'D:\Exponency\Git\Breakout\CSV\RSI_Watchlist.csv')
     df['Buy_Date'] = pd.to_datetime(df['Buy_Date'],dayfirst=True)
     df['Buy_Price'] = df.apply(lambda row : Get_stock_price(row['Scrip'],row['Buy_Date']),axis=1)
     df['Buy_Rsi'] = df.apply(lambda row : Get_RSI(row['Scrip'],row['Buy_Date']),axis=1)
@@ -95,17 +93,15 @@ def Fetch_Data():
         "Max % Increase": st.column_config.NumberColumn("Max % Increase", disabled=True,format="%0.2f%%"),
         "Status": st.column_config.SelectboxColumn("Status",options=["Good","Hold","Uptrend","DownTrend - ve"])
     }
-    # print(df)
     return df,column_config
 
 # Fetch_Data()
 
 def Order_Log():
-    df = pd.read_csv(fr'D:\Exponency\RSI Breakout\RSI_Orderlog.csv',index_col="UID")
+    df = pd.read_csv(fr'D:\Exponency\Git\Breakout\CSV\RSI_Orderlog.csv',index_col="UID")
     df['DateTime'] = pd.to_datetime(df['DateTime'],dayfirst=True)
     df['Price'] = df.apply(lambda row:  Get_stock_price(row['Scrip'], row['DateTime']), axis=1)
     df['Value'] = df.apply(lambda row: row['Price']*row['Qty'],axis=1)
-    # print(df)
     df=df.style.format({'Price':'₹{:,.2f}','Value':'₹{:,.2f}'})
     return df
 

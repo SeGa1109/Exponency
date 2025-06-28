@@ -10,7 +10,7 @@ from Strategy import RSI_Breakout
 
 st.title('Exponency Build..!')
 
-tab_widget=st.tabs(["RSi Breakout",'Chart'])
+tab_widget=st.tabs(["RSI Breakout"])
 
 Stock_list=["ETF","Nifty50", "NSE500", "NSEALL" ]
 
@@ -24,7 +24,7 @@ def Notif_Check():
     print(scriplist)
     if scriplist:
         df.loc[df["Scrip"].isin(scriplist), "Notif"] = False
-        df.to_csv('D:\Exponency\RSI Breakout\RSI_Watchlist.csv', index=False)
+        df.to_csv('D:\Exponency\Git\Breakout\CSV\RSI_Watchlist.csv', index=False)
         st.session_state.data = df
         scriplist = '\n'.join(scriplist)
         MSG = f"Stocks Crossed RSI -55 \n {scriplist}"
@@ -52,7 +52,7 @@ with tab_widget[0]:
         if st.button("Save",use_container_width=True):
             # print(RSI)
             st.success("Changes saved!")
-            RSI.to_csv('D:\Exponency\RSI Breakout\RSI_Watchlist.csv',index=False)
+            RSI.to_csv('D:\Exponency\Git\Breakout\CSV\RSI_Watchlist.csv',index=False)
 
         if st.session_state.auto_refresh:
             time.sleep(30)
