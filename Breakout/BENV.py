@@ -7,6 +7,8 @@ import pandas_ta as ta
 import numpy as np
 import time
 import pywhatkit
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 YFdateform = "%Y-%m-%d"
 C_Date = ddt.now()
@@ -117,7 +119,7 @@ def Fetch_Graph_Data(Scrip,intvl,Chart_Sel):
             data = yf.Ticker(Scrip).history(start=start_date, end=end_date, interval=intvl)
 
         if intvl == '1h':
-            start_date = (ddt.now() - dt.timedelta(days=5)).strftime(YFdateform)
+            start_date = (ddt.now() - dt.timedelta(days=30)).strftime(YFdateform)
             end_date = (ddt.now() - dt.timedelta(days=-1)).strftime(YFdateform)
             data = yf.Ticker(Scrip).history(start=start_date, end=end_date, interval=intvl)
 
@@ -145,7 +147,7 @@ def Fetch_Graph_Data(Scrip,intvl,Chart_Sel):
                 data = yf.Ticker(step).history(start=start_date, end=end_date, interval=intvl)
 
             if intvl == '1h':
-                start_date = (ddt.now() - dt.timedelta(days=5)).strftime(YFdateform)
+                start_date = (ddt.now() - dt.timedelta(days=10)).strftime(YFdateform)
                 end_date = (ddt.now() - dt.timedelta(days=-1)).strftime(YFdateform)
                 data = yf.Ticker(step).history(start=start_date, end=end_date, interval=intvl)
 
@@ -178,6 +180,44 @@ def RSI_Filter(Scriplist,Dateval):
                 master.append(step)
     # print(master)
     return master
+
+def Create_RSI_Chart(stock_data,Stock_Sel):
+    fig = make_subplots(rows=2, cols=1, shared_xaxes=True,
+                        vertical_spacing=0.1, subplot_titles=(f"{Stock_Sel} Candlestick", "RSI"),
+                        row_heights=[0.7, 0.3])
+    stock_data.index = stock_data.index.strftime('%d-%b %H:%M')
+    # Add Candlestick
+    fig.add_trace(go.Candlestick(x=stock_data.index,
+                                 open=stock_data['Open'],
+                                 high=stock_data['High'],
+                                 low=stock_data['Low'],
+                                 close=stock_data['Close'],
+                                 name=Stock_Sel),
+                  row=1, col=1)
+
+    fig.add_trace(go.Scatter(x=stock_data.index, y=stock_data['RSI'], mode='lines', name='RSI'),
+                  row=2, col=1)
+
+    fig.update_layout(
+        title=f"{Stock_Sel} - RSI Breakout",
+        # xaxis_title="Date",
+        yaxis_title="Price (INR)",
+        xaxis2_title="Date",
+        yaxis2_title="RSI",
+        xaxis_rangeslider_visible=False,
+        template="plotly_white",
+        height=600,
+        width=900,
+        showlegend=False
+    )
+
+    fig.add_hline(y=60, line_dash="dash", line_color="red", row=2, col=1)
+    fig.add_hline(y=30, line_dash="dash", line_color="blue", row=2, col=1)
+    fig.update_yaxes(title_text="Price (INR)", side="right", row=1, col=1)
+    fig.update_yaxes(title_text="RSI", side="right", row=2, col=1)
+    fig.update_xaxes(type='category')
+
+    return fig
 
 
 # RSI_Filter(['JBMA.NS',"WIPRO.NS"],ddt.today())
