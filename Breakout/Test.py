@@ -1,13 +1,22 @@
+import pandas as pd
 import streamlit as st
-import yfinance as yf
-import plotly.graph_objects as go
-from datetime import datetime, timedelta
-col1, col2 = st.columns(2)
+import BENV
 
-with col1:
-    st.header("Left Column")
-    st.button("Click Left")
+fcol1, fcol2 = st.columns(2)
+with fcol1:
+    filter_index = st.selectbox("Index List", ["ETF", "NSE_50", "NSE_500"])
+with fcol2:
+    filter_date = st.date_input("Data")
 
-with col2:
-    st.header("Right Column")
-    st.button("Click Right")
+data = pd.read_csv(fr"D:\Exponency_Build\Streamlit_Screener\Directory\{filter_index}.csv").values.tolist()
+data = [x[0] for x in data]
+
+if st.button("Filter"):
+    OP = BENV.RSI_Filter(data,filter_date)
+    OP = pd.DataFrame(OP,columns=['Scrip'])
+    OP['C.price'] = ""
+    OP['C.price'] = OP.apply(lambda row : BENV.Get_stock_price(row['Scrip'],pd.to_datetime(filter_date)),axis=1)
+    st.dataframe(OP)
+
+
+

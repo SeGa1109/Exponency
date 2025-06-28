@@ -61,60 +61,138 @@ with tab_widget[0]:
             st.session_state.data = Inp[0]
             st.rerun()
 
-        Stock, Interval, Chart = st.columns(3)
-        with Stock :
-            Stock_Sel = st.selectbox("Scrip",options = st.session_state.data['Scrip'].values.tolist())
+        with st.form("Graphy"):
+            Stock, Interval, Chart, Candles = st.columns(4)
+            with Stock :
+                Stock_Sel = st.selectbox("Scrip",options = ['All']+st.session_state.data['Scrip'].values.tolist())
 
-        with Interval :
-            Interval_Sel = st.selectbox("Interval", options=['1d','1h','1m'])
+            with Interval :
+                Interval_Sel = st.selectbox("Interval", options=['1d','1h','1m'])
 
-        with Chart :
-            Chart_Sel = st.selectbox("Chart Type", options=['Candle','Line'])
+            with Chart :
+                Chart_Sel = st.selectbox("Chart Type", options=['Candle','Line'])
 
-        if st.button("Generate", use_container_width=True):
-            print(Stock_Sel,Interval_Sel,Chart_Sel)
-            stock_data = Fetch_Graph_Data(Stock_Sel,Interval_Sel,Chart_Sel)
-            stock_data = stock_data.tail(30)
+            if st.form_submit_button("Generate", use_container_width=True):
+                print(Stock_Sel,Interval_Sel,Chart_Sel)
+                if Stock_Sel != "All":
+                    stock_data = Fetch_Graph_Data(Stock_Sel, Interval_Sel, Chart_Sel)
+                    stock_data = stock_data.tail(100)
+                    if Chart_Sel =="Candle":
+                        fig = make_subplots(rows=2, cols=1, shared_xaxes=True,
+                                            vertical_spacing=0.1, subplot_titles=(f"{Stock_Sel} Candlestick", "RSI"),
+                                            row_heights=[0.7, 0.3])
 
-            fig = make_subplots(rows=2, cols=1, shared_xaxes=True,
-                                vertical_spacing=0.1, subplot_titles=(f"{Stock_Sel} Candlestick", "RSI"),
-                                row_heights=[0.7, 0.3])
+                    # Add Candlestick
+                        fig.add_trace(go.Candlestick(x=stock_data.index,
+                                             open=stock_data['Open'],
+                                             high=stock_data['High'],
+                                             low=stock_data['Low'],
+                                             close=stock_data['Close'],
+                                             name=Stock_Sel),
+                                      row=1, col=1)
 
-        # Add Candlestick
-            fig.add_trace(go.Candlestick(x=stock_data.index,
-                                 open=stock_data['Open'],
-                                 high=stock_data['High'],
-                                 low=stock_data['Low'],
-                                 close=stock_data['Close'],
-                                 name=Stock_Sel),
-                          row=1, col=1)
+                        fig.add_trace(go.Scatter(x=stock_data.index, y=stock_data['RSI'], mode='lines', name='RSI'),
+                              row=2, col=1)
 
-            fig.add_trace(go.Scatter(x=stock_data.index, y=stock_data['RSI'], mode='lines', name='RSI'),
-                  row=2, col=1)
+                        fig.update_layout(
+                            title=f"{Stock_Sel} - RSI Breakout",
+                            # xaxis_title="Date",
+                            yaxis_title="Price (INR)",
+                            xaxis2_title="Date",
+                            yaxis2_title="RSI",
+                            xaxis_rangeslider_visible=False,
+                            template="plotly_white",
+                            height=600,
+                            width=900,
+                        showlegend = False
+                        )
 
-            fig.update_layout(
-                title=f"{Stock_Sel} - RSI Breakout",
-                xaxis_title="Date",
-                yaxis_title="Price (INR)",
-                xaxis2_title="Date",
-                yaxis2_title="RSI",
-                xaxis_rangeslider_visible=False,
-                template="plotly_white",
-                height=800,
-                width=1000,
-            showlegend = False
-            )
+                        fig.add_hline(y=60, line_dash="dash", line_color="red", row=2, col=1)
+                        fig.add_hline(y=30, line_dash="dash", line_color="blue", row=2, col=1)
+                        fig.update_yaxes(title_text="Price (INR)", side="right", row=1, col=1)
+                        fig.update_yaxes(title_text="RSI", side="right", row=2, col=1)
+                        col1, col2, col3 = st.columns([1, 2, 1])  # Adjust ratios
+                        with col2:
+                            st.plotly_chart(fig)
+                else:
+                    Scriplist = st.session_state.data['Scrip'].values.tolist()
+                    stock_datum = Fetch_Graph_Data(Scriplist, Interval_Sel, Chart_Sel)
+                    figlist=[]
+                    for i,stock_data in enumerate(stock_datum):
+                        stock_data = stock_data.tail(100)
+                        fig = make_subplots(rows=2, cols=1, shared_xaxes=True,
+                                            vertical_spacing=0.1, subplot_titles=(f"{Scriplist[i]} Candlestick", "RSI"),
+                                            row_heights=[0.7, 0.3])
 
-            fig.add_hline(y=60, line_dash="dash", line_color="red", row=2, col=1)
-            fig.add_hline(y=30, line_dash="dash", line_color="blue", row=2, col=1)
-            fig.update_yaxes(title_text="Price (INR)", side="right", row=1, col=1)
-            fig.update_yaxes(title_text="RSI", side="right", row=2, col=1)
-            col1, col2, col3 = st.columns([1, 2, 1])  # Adjust ratios
-            with col2:
-                st.plotly_chart(fig)
+                        # Add Candlestick
+                        fig.add_trace(go.Candlestick(x=stock_data.index,
+                                                     open=stock_data['Open'],
+                                                     high=stock_data['High'],
+                                                     low=stock_data['Low'],
+                                                     close=stock_data['Close'],
+                                                     name=Scriplist[i]),
+                                      row=1, col=1)
+
+                        fig.add_trace(go.Scatter(x=stock_data.index, y=stock_data['RSI'], mode='lines', name='RSI'),
+                                      row=2, col=1)
+
+                        fig.update_layout(
+                            title=f"{Scriplist[i]} - RSI Breakout",
+                            # xaxis_title="Date",
+                            yaxis_title="Price (INR)",
+                            xaxis2_title="Date",
+                            yaxis2_title="RSI",
+                            xaxis_rangeslider_visible=False,
+                            template="plotly_white",
+                            height=600,
+                            width=900,
+                            showlegend=False
+                        )
+
+                        fig.add_hline(y=60, line_dash="dash", line_color="red", row=2, col=1)
+                        fig.add_hline(y=30, line_dash="dash", line_color="blue", row=2, col=1)
+                        fig.update_yaxes(title_text="Price (INR)", side="right", row=1, col=1)
+                        fig.update_yaxes(title_text="RSI", side="right", row=2, col=1)
+                        fig.update_yaxes(fixedrange=False)
+                        fig.update_xaxes(fixedrange=False)
+                        figlist.append(fig)
+
+
+                    i = 0
+                    j = 1
+                    for item2 in figlist:
+                        i += 1
+                        if i == 1:
+                            locals()['colchart' + str(j)], locals()['colchart' + str(j + 1)] = st.columns([1, 1])
+                            with locals()['colchart' + str(j)]:
+                                st.plotly_chart(item2)
+                        if i == 2:
+                            with locals()['colchart' + str(j + 1)]:
+                                st.plotly_chart(item2)
+                                i = 0
+                                j += 2
 
     with tab_widget_RSI[1]:
         streamlit.dataframe(RSI_Breakout.Order_Log())
+
+    with tab_widget_RSI[2]:
+        fcol1, fcol2 = st.columns(2)
+        with fcol1:
+            filter_index = st.selectbox("Index List", ["ETF", "NSE_50", "NSE_500"])
+        with fcol2:
+            filter_date = st.date_input("Data")
+
+        data = pd.read_csv(fr"D:\Exponency_Build\Streamlit_Screener\Directory\{filter_index}.csv").values.tolist()
+        data = [x[0] for x in data]
+
+        if st.button("Filter"):
+            OP = RSI_Filter(data, filter_date)
+            OP = pd.DataFrame(OP, columns=['Scrip'])
+            OP['C.price'] = ""
+            OP['C.price'] = OP.apply(lambda row: Get_stock_price(row['Scrip'], pd.to_datetime(filter_date)),
+                                     axis=1)
+            st.dataframe(OP)
+
 
 
 
