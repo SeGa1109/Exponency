@@ -1,0 +1,6 @@
+Scrip,Buy_Date,Buy_Price,Buy_Rsi,C.RSI,% Increase,Swing Days,C.price,Swing price,Max Swing,Max % Increase,Target %,Status,Remarks,Notif
+JYOTHYLAB.NS,23-06-2025 10:00,323.1,33.1,🟡51.00,✅5.08%,🌿 5,339.5,16.4,17.9,5.54,5,Good,Wait till Monday,TRUE
+SAREGAMA.NS,26-06-2025 09:20,503.75,32.6,⏸️33.30,🚧-0.15%,🌱 2,503,-0.75,4.95,0.98,2,Hold,Uptrend Initiated,TRUE
+TRIVENI.NS,26-06-2025 09:20,395.7,33.8,⏸️32.90,❌-3.23%,🌱 2,382.9,-12.8,0,0,2,Hold,"Falling,",TRUE
+JBMA.NS,27-06-2025 10:00,646.4,34.7,⏸️34.70,❌-0.78%,🌱 1,641.35,-5.05,5.05,0.78,2,Wait,Good Start,TRUE
+ABFRL.NS,23-06-2025 10:00,73.85,18.7,⏸️19.90,✔️1.29%,🌿 5,74.8,0.95,1.58,2.14,2,Hold,"Sideways, +ve Expected",TRUE
