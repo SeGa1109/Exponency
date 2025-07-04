@@ -52,7 +52,7 @@ def format_days(val):
         return f"🌳 {val:}"
 
 def Fetch_Data():
-    df = pd.read_csv(fr'D:\Exponency\Git\Breakout\CSV\RSI_Watchlist.csv')
+    df = pd.read_csv(fr'{ldir}\CSV\RSI_Watchlist.csv')
     df['Buy_Date'] = pd.to_datetime(df['Buy_Date'],dayfirst=True)
     df['Buy_Price'] = df.apply(lambda row : Get_stock_price(row['Scrip'],row['Buy_Date']),axis=1)
     df['Buy_Rsi'] = df.apply(lambda row : Get_RSI(row['Scrip'],row['Buy_Date']),axis=1)
@@ -98,12 +98,21 @@ def Fetch_Data():
 # Fetch_Data()
 
 def Order_Log():
-    df = pd.read_csv(fr'D:\Exponency\Git\Breakout\CSV\RSI_Orderlog.csv',index_col="UID")
-    df['DateTime'] = pd.to_datetime(df['DateTime'],dayfirst=True)
-    df['Price'] = df.apply(lambda row:  Get_stock_price(row['Scrip'], row['DateTime']), axis=1)
-    df['Value'] = df.apply(lambda row: row['Price']*row['Qty'],axis=1)
-    df=df.style.format({'Price':'₹{:,.2f}','Value':'₹{:,.2f}'})
+    df = pd.read_csv(fr'{ldir}\CSV\RSI_Orderlog.csv',index_col="UID")
+    df['Buy_Time'] = pd.to_datetime(df['Buy_Time'],dayfirst=True)
+    df['Buy_Price'] = df.apply(lambda row:  Get_stock_price(row['Scrip'], row['Buy_Time']), axis=1)
+    df['Buy_Value'] = df.apply(lambda row: row['Buy_Price']*row['Qty'],axis=1)
+
+    df['Sell_Time'] = pd.to_datetime(df['Sell_Time'],dayfirst=True)
+    df['Sell_Price'] = df.apply(
+        lambda row: Get_stock_price(row['Scrip'], row['Sell_Time']) if pd.notnull(row['Sell_Time']) else 0,axis=1)
+
+    df['Sell_Value'] = df.apply(lambda row: row['Sell_Price']*row['Qty'],axis=1)
+
+    df['Balance'] = df.apply(lambda row : row['Sell_Value'] - row['Buy_Value'],axis=1)
+    df['Per-Cent'] = df.apply(lambda row : row['Balance']*100/row['Buy_Value'],axis=1   )
+
+    df=df.style.format({'Buy_Price':'₹{:,.2f}','Buy_Value':'₹{:,.2f}'})
+
     return df
 
-
-Order_Log()

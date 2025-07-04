@@ -14,17 +14,16 @@ tab_widget=st.tabs(["RSI Breakout"])
 
 Stock_list=["ETF","Nifty50", "NSE500", "NSEALL" ]
 
-
 def Notif_Check():
     df = st.session_state.data
     df1 = df.copy()
     df1['C.RSI'] = df1['C.RSI'].str.extract(r"(\d+\.?\d*)").astype(float)
     df1 = df1[df1['Notif']==True]
-    scriplist = df1[df1['C.RSI']>52]['Scrip'].values.tolist()
+    scriplist = df1[df1['C.RSI']>55]['Scrip'].values.tolist()
     print(scriplist)
     if scriplist:
         df.loc[df["Scrip"].isin(scriplist), "Notif"] = False
-        df.to_csv('D:\Exponency\Git\Breakout\CSV\RSI_Watchlist.csv', index=False)
+        df.to_csv(fr'{ldir}\CSV\RSI_Watchlist.csv', index=False)
         st.session_state.data = df
         scriplist = '\n'.join(scriplist)
         MSG = f"Stocks Crossed RSI -55 \n {scriplist}"
@@ -32,7 +31,7 @@ def Notif_Check():
 
 with tab_widget[0]:
 
-    tab_widget_RSI = st.tabs(["Watchlist", "Order Log" ,"Filter",])
+    tab_widget_RSI = st.tabs(["Watchlist", "Order Log" ,"Filter","Backtest"])
     with tab_widget_RSI[0]:
         if "auto_refresh" not in st.session_state:
             st.session_state.auto_refresh = False
@@ -52,7 +51,7 @@ with tab_widget[0]:
         if st.button("Save",use_container_width=True):
             # print(RSI)
             st.success("Changes saved!")
-            RSI.to_csv('D:\Exponency\Git\Breakout\CSV\RSI_Watchlist.csv',index=False)
+            RSI.to_csv(fr'{ldir}\CSV\RSI_Watchlist.csv',index=False)
 
         if st.session_state.auto_refresh:
             time.sleep(30)
@@ -117,16 +116,35 @@ with tab_widget[0]:
         with fcol2:
             filter_date = st.date_input("Data")
 
-        data = pd.read_csv(fr"D:\Exponency_Build\Streamlit_Screener\Directory\{filter_index}.csv").values.tolist()
+        data = pd.read_csv(fr"{ldir}\Scriplist\{filter_index}.csv").values.tolist()
         data = [x[0] for x in data]
 
         if st.button("Filter"):
             OP = RSI_Filter(data, filter_date)
             OP = pd.DataFrame(OP, columns=['Scrip'])
-            # OP['C.price'] = ""
             OP['C.price'] = OP.apply(lambda row: Get_stock_price(row['Scrip'], pd.to_datetime(filter_date)),
                                      axis=1)
             st.dataframe(OP)
+
+    with tab_widget_RSI[3]:
+        S1,S2,S3 = st.columns([1,2,1])
+        with S2:
+            Index = streamlit.selectbox("Index List",['ETF','NSE50','NSE500',"SENSEX"],)
+
+            if Index:
+                data = pd.read_csv(fr"{ldir}\Scriplist\{filter_index}.csv").values.tolist()
+                data = [x[0] for x in data]
+                Scrip = streamlit.selectbox("Scrip List", data)
+
+            if st.button("Fetch Backtest Data"):
+                Inp = Backtest_RSI(Scrip)
+                st.dataframe(Inp[1])
+                st.dataframe(Inp[0])
+
+
+
+
+
 
 
 
