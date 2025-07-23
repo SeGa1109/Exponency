@@ -107,7 +107,15 @@ with tab_widget[0]:
                         i += 2  # Move to the next pair
 
     with tab_widget_RSI[1]:
-        streamlit.dataframe(RSI_Breakout.Order_Log())
+        Order_data = RSI_Breakout.Order_Log()
+        Order_data_df = Order_data.style.format({
+            'Buy_Price': '₹{:,.2f}',
+            'Sell_Price': '₹{:,.2f}',
+            'Per-Cent': '{:.2f}%'
+        })
+        streamlit.dataframe(Order_data_df,use_container_width=False)
+        if st.button("Post OrderLog",):
+            Order_data.to_csv(fr'{ldir}\CSV\RSI_Orderlog.csv',index=False)
 
     with tab_widget_RSI[2]:
         fcol1, fcol2 = st.columns(2)

@@ -52,9 +52,10 @@ def format_days(val):
 def Fetch_Data():
     df = pd.read_csv(fr'{ldir}\CSV\RSI_Watchlist.csv')
     df['Buy_Date'] = pd.to_datetime(df['Buy_Date'],dayfirst=True)
-    df['Buy_Price'] = df.apply(lambda row : Get_stock_price(row['Scrip'],row['Buy_Date']),axis=1)
-    df['Buy_Rsi'] = df.apply(lambda row : Get_RSI(row['Scrip'],row['Buy_Date']),axis=1)
-
+    df['Buy_Price'] = df.apply(lambda row : Get_stock_price(row['Scrip'],row['Buy_Date'])
+    if pd.isna(row['Buy_Price']) else row['Buy_Price'],axis=1)
+    df['Buy_Rsi'] = df.apply(lambda row : Get_RSI(row['Scrip'],row['Buy_Date'])
+    if pd.isna(row['Buy_Rsi']) else row['Buy_Rsi'],axis=1)
     df['C.price'] = df.apply(lambda row : Get_stock_price(row['Scrip'],ddt.now()),axis=1)
     df['C.RSI'] = df.apply(lambda row : Get_RSI(row['Scrip'],ddt.now()),axis=1)
     df["C.RSI"] = df["C.RSI"].apply(format_CRSI)
@@ -96,21 +97,19 @@ def Fetch_Data():
 # Fetch_Data()
 
 def Order_Log():
-    df = pd.read_csv(fr'{ldir}\CSV\RSI_Orderlog.csv',index_col="UID")
-    df['Buy_Time'] = pd.to_datetime(df['Buy_Time'],dayfirst=True)
-    df['Buy_Price'] = df.apply(lambda row:  Get_stock_price(row['Scrip'], row['Buy_Time']), axis=1)
-    df['Buy_Value'] = df.apply(lambda row: row['Buy_Price']*row['Qty'],axis=1)
+    df = pd.read_csv(fr'{ldir}\CSV\RSI_Orderlog.csv')
+    df['Buy_Time'] = pd.to_datetime(df['Buy_Time'],format = '%d-%m-%Y %H:%M')
+    df['Buy_Price'] = df.apply(lambda row:  Get_stock_price(row['Scrip'], row['Buy_Time'] )if pd.isna(row['Buy_Price']) else row['Buy_Price'], axis=1)
 
-    df['Sell_Time'] = pd.to_datetime(df['Sell_Time'],dayfirst=True)
+    df['Sell_Time'] = pd.to_datetime(df['Sell_Time'],format = '%d-%m-%Y %H:%M')
     df['Sell_Price'] = df.apply(
-        lambda row: Get_stock_price(row['Scrip'], row['Sell_Time']) if pd.notnull(row['Sell_Time']) else 0,axis=1)
+        lambda row: Get_stock_price(row['Scrip'], row['Sell_Time']) if pd.isna(row['Sell_Price']) else row['Sell_Price'],axis=1)
 
-    df['Sell_Value'] = df.apply(lambda row: row['Sell_Price']*row['Qty'],axis=1)
+    df['Per-Cent'] = df.apply(lambda row : (row['Sell_Price'] - row['Buy_Price'])*100/row['Buy_Price'],axis=1)
 
-    df['Balance'] = df.apply(lambda row : row['Sell_Value'] - row['Buy_Value'],axis=1)
-    df['Per-Cent'] = df.apply(lambda row : row['Balance']*100/row['Buy_Value'],axis=1   )
+    df['Working_Days'] = np.busday_count(df['Buy_Time'].values.astype('datetime64[D]'),
+                                         df['Sell_Time'].values.astype('datetime64[D]'))
 
-    df=df.style.format({'Buy_Price':'₹{:,.2f}','Buy_Value':'₹{:,.2f}'})
 
     return df
 

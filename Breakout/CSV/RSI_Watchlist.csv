@@ -1,5 +1,5 @@
 Scrip,Buy_Date,Buy_Price,Buy_Rsi,C.RSI,% Increase,Swing Days,C.price,Swing price,Max Swing,Max % Increase,Target %,Status,Remarks,Notif
-SAREGAMA.NS,26-06-2025 09:20,,,,,,,,,,3,Hold,Missed,TRUE
-TRIVENI.NS,26-06-2025 09:20,,,,,,,,,,3,Uptrend Started,"Flop, Identify",TRUE
-JBMA.NS,27-06-2025 10:00,,,,,,,,,,3,Hold,Missed,TRUE
-DBREALTY.NS,22-07-2025 10:30,,,,,,,,,,3,New,,TRUE
+SAREGAMA.NS,2025-06-26 09:20:00,503.75,32.6,🟡45.10,❌-1.47%,🌳 20,496.35,-7.399999999999977,14.450000000000045,2.87,3,Hold,Missed,True
+TRIVENI.NS,2025-06-26 09:20:00,395.7,33.8,⏸️39.00,❌-6.38%,🌳 20,370.45,-25.25,-2.0,-0.51,3,Uptrend Started,"Flop, Identify",True
+JBMA.NS,2025-06-27 10:00:00,646.4,34.7,⏸️39.00,❌-1.79%,🌳 19,634.8,-11.600000000000023,11.100000000000023,1.72,3,Hold,Missed,True
+DBREALTY.NS,2025-07-22 10:30:00,197.0,34.8,⏸️34.00,❌-1.7%,🌱 2,193.65,-3.3499999999999943,3.0,1.52,3,New,--,True
