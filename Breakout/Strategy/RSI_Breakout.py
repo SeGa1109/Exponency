@@ -42,14 +42,12 @@ def format_Incr_Prc(row):
         return f"❌{val1}%"
 
 def format_days(val):
-    if val <3:
+    if val <=6:
         return f"🌱 {val}"
-    elif val <= 6:
-
-
+    elif val <= 12:
         return f"🌿 {val}"
-    elif val > 6 :
-        return f"🌳 {val:}"
+    elif val > 12 :
+        return f"🌳 {val}"
 
 def Fetch_Data():
     df = pd.read_csv(fr'{ldir}\CSV\RSI_Watchlist.csv')

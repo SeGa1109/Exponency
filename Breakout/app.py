@@ -8,7 +8,7 @@ st.set_page_config(layout="wide")
 
 from Strategy import RSI_Breakout
 
-st.title('Exponency Build..!')
+st.title('Exponency Build :)')
 
 tab_widget=st.tabs(["RSI Breakout"])
 
@@ -129,12 +129,13 @@ with tab_widget[0]:
     with tab_widget_RSI[3]:
         S1,S2,S3 = st.columns([1,2,1])
         with S2:
-            Index = streamlit.selectbox("Index List",['ETF','NSE50','NSE500',"SENSEX"],)
+            filter_index = streamlit.selectbox("Index List",['ETF','NSE50','NSE500',"SENSEX"],)
 
-            if Index:
-                data = pd.read_csv(fr"{ldir}\Scriplist\{filter_index}.csv").values.tolist()
-                data = [x[0] for x in data]
-                Scrip = streamlit.selectbox("Scrip List", data)
+            if filter_index:
+                Backtestdata = pd.read_csv(fr"{ldir}\Scriplist\{filter_index}.csv").values.tolist()
+                Backtestdata = [x[0] for x in Backtestdata]
+                print(Backtestdata)
+                Scrip = streamlit.selectbox("Scrip List", Backtestdata,accept_new_options=True)
 
             if st.button("Fetch Backtest Data"):
                 Inp = Backtest_RSI(Scrip)

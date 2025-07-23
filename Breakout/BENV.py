@@ -12,7 +12,7 @@ from datetime import timedelta
 
 YFdateform = "%Y-%m-%d"
 C_Date = ddt.now()
-ldir = fr'D:\Exponency\Git\Breakout'
+ldir = fr'D:\Algo_Exponency\Streamlit\Breakout'
 def Get_stock_price(scrip, dattim):
     print(scrip,dattim)
     print(type(dattim))
