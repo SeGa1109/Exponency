@@ -1,8 +1,6 @@
 import streamlit
-import streamlit.components.v1 as components
 from BENV import *
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 
 st.set_page_config(layout="wide")
 
@@ -23,7 +21,7 @@ def Notif_Check():
     print(scriplist)
     if scriplist:
         df.loc[df["Scrip"].isin(scriplist), "Notif"] = False
-        df.to_csv(fr'{ldir}\CSV\RSI_Watchlist.csv', index=False)
+        df.to_csv(fr'{ldir}\Breakout\Breakout\CSV\RSI_Watchlist.csv', index=False)
         st.session_state.data = df
         scriplist = '\n'.join(scriplist)
         MSG = f"Stocks Crossed RSI -55 \n {scriplist}"
@@ -51,7 +49,7 @@ with tab_widget[0]:
         if st.button("Save",use_container_width=True):
             # print(RSI)
             st.success("Changes saved!")
-            RSI.to_csv(fr'{ldir}\CSV\RSI_Watchlist.csv',index=False)
+            RSI.to_csv(fr'{ldir}\Breakout\CSV\RSI_Watchlist.csv',index=False)
 
         if st.session_state.auto_refresh:
             time.sleep(30)
@@ -115,7 +113,7 @@ with tab_widget[0]:
         })
         streamlit.dataframe(Order_data_df,use_container_width=False)
         if st.button("Post OrderLog",):
-            Order_data.to_csv(fr'{ldir}\CSV\RSI_Orderlog.csv',index=False)
+            Order_data.to_csv(fr'{ldir}\Breakout\CSV\RSI_Orderlog.csv',index=False)
 
     with tab_widget_RSI[2]:
         fcol1, fcol2 = st.columns(2)
@@ -124,7 +122,7 @@ with tab_widget[0]:
         with fcol2:
             filter_date = st.date_input("Data")
 
-        data = pd.read_csv(fr"{ldir}\Scriplist\{filter_index}.csv").values.tolist()
+        data = pd.read_csv(fr"{ldir}\Breakout\Scriplist\{filter_index}.csv").values.tolist()
         data = [x[0] for x in data]
 
         if st.button("Filter"):
@@ -140,7 +138,7 @@ with tab_widget[0]:
             filter_index = streamlit.selectbox("Index List",['ETF','NSE50','NSE500',"SENSEX"],)
 
             if filter_index:
-                Backtestdata = pd.read_csv(fr"{ldir}\Scriplist\{filter_index}.csv").values.tolist()
+                Backtestdata = pd.read_csv(fr"{ldir}\Breakout\Scriplist\{filter_index}.csv").values.tolist()
                 Backtestdata = [x[0] for x in Backtestdata]
                 print(Backtestdata)
                 Scrip = streamlit.selectbox("Scrip List", Backtestdata,accept_new_options=True)

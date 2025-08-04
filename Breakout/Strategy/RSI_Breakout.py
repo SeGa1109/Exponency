@@ -50,7 +50,7 @@ def format_days(val):
         return f"🌳 {val}"
 
 def Fetch_Data():
-    df = pd.read_csv(fr'{ldir}\CSV\RSI_Watchlist.csv')
+    df = pd.read_csv(fr'{ldir}\Breakout\CSV\RSI_Watchlist.csv')
     df['Buy_Date'] = pd.to_datetime(df['Buy_Date'],dayfirst=True)
     df['Buy_Price'] = df.apply(lambda row : Get_stock_price(row['Scrip'],row['Buy_Date'])
     if pd.isna(row['Buy_Price']) else row['Buy_Price'],axis=1)
@@ -97,7 +97,7 @@ def Fetch_Data():
 # Fetch_Data()
 
 def Order_Log():
-    df = pd.read_csv(fr'{ldir}\CSV\RSI_Orderlog.csv')
+    df = pd.read_csv(fr'{ldir}\Breakout\CSV\RSI_Orderlog.csv')
     df['Buy_Time'] = pd.to_datetime(df['Buy_Time'],format = '%d-%m-%Y %H:%M')
     df['Buy_Price'] = df.apply(lambda row:  Get_stock_price(row['Scrip'], row['Buy_Time'] )if pd.isna(row['Buy_Price']) else row['Buy_Price'], axis=1)
 
