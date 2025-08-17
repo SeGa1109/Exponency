@@ -9,6 +9,12 @@ import time
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from datetime import timedelta
+import requests
+import pandas as pd
+from io import StringIO
+
+owner = "SeGa1109"
+repo = "Exponency"
 
 YFdateform = "%Y-%m-%d"
 C_Date = ddt.now()

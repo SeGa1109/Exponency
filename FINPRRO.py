@@ -10,8 +10,14 @@ st.set_page_config(layout="wide")
 pd.set_option('display.max_columns', None)
 print(os.getcwd())
 
-df = pd.read_csv(fr"https://github.com/SeGa1109/Exponency/blob/main/FINPRRO/Scriplist.csv")
-print(df.columns)
+path = "FINPRRO/Scriplist.csv"
+url = f"https://api.github.com/repos/{owner}/{repo}/contents/{path}"
+r = requests.get(url, headers={'accept': 'application/vnd.github.v3.raw'})
+# convert string to StringIO
+string_io_obj = StringIO(r.text)
+
+df = pd.read_csv(string_io_obj)
+print("XX",df.columns)
 df['N-1'] = df.apply(lambda row : round(Get_Specific_Stock_Price(row['YF_Ticker'],ddt.today()+ dt.timedelta(-1),False)[3],2),axis = 1)
 df[["N_Open","N_High","N_Low","Current"]] = df.apply(
     lambda row : Get_Specific_Stock_Price(row['YF_Ticker'], ddt.today(), True),
