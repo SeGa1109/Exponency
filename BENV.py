@@ -5,7 +5,7 @@ from datetime import datetime as ddt
 import datetime as dt
 import numpy as np
 import time
-import pywhatkit
+# import pywhatkit
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from datetime import timedelta
