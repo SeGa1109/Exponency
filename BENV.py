@@ -140,6 +140,11 @@ def Fetch_Graph_Data(Scrip,intvl,Chart_Sel):
         rs = avg_gain / avg_loss
         data['RSI'] = round(100 - (100 / (1 + rs)),1)
 
+        data['EMA12'] = data['Close'].ewm(span=12, adjust=False).mean()
+        data['EMA26'] = data['Close'].ewm(span=26, adjust=False).mean()
+        data['MACD'] = data['EMA12'] - data['EMA26']
+        data['Signal'] = data['MACD'].ewm(span=9, adjust=False).mean()
+
         # print(data)
         return data
 
@@ -167,6 +172,10 @@ def Fetch_Graph_Data(Scrip,intvl,Chart_Sel):
 
             rs = avg_gain / avg_loss
             data['RSI'] = round(100 - (100 / (1 + rs)), 1)
+            data['EMA12'] = data['Close'].ewm(span=12, adjust=False).mean()
+            data['EMA26'] = data['Close'].ewm(span=26, adjust=False).mean()
+            data['MACD'] = data['EMA12'] - data['EMA26']
+            data['Signal'] = data['MACD'].ewm(span=9, adjust=False).mean()
             Datas.append(data)
         return Datas
 
@@ -187,32 +196,37 @@ def RSI_Filter(Scriplist,Dateval):
     return master
 
 def Create_RSI_Chart(stock_data,Stock_Sel):
-    fig = make_subplots(rows=2, cols=1, shared_xaxes=True,
-                        vertical_spacing=0.1, subplot_titles=(f"{Stock_Sel} Candlestick", "RSI"),
-                        row_heights=[0.7, 0.3])
-    stock_data.index = stock_data.index.strftime('%d-%b %H:%M')
+    print(Stock_Sel)
+    fig = make_subplots(
+        rows=3, cols=1, shared_xaxes=True,
+        vertical_spacing=0.05,
+        subplot_titles=(f"{Stock_Sel[0]} Candlestick", "RSI", "Normalized MACD Histogram"),
+        row_heights=[0.6, 0.2, 0.2],
+        specs=[[{"secondary_y": True}], [{}], [{}]]
+    )
+    stock_data.index = stock_data.index.strftime('%d-%b')
     # Add Candlestick
     fig.add_trace(go.Candlestick(x=stock_data.index,
                                  open=stock_data['Open'],
                                  high=stock_data['High'],
                                  low=stock_data['Low'],
                                  close=stock_data['Close'],
-                                 name=Stock_Sel),
+                                 name=Stock_Sel[0]),secondary_y=False,
                   row=1, col=1)
 
     fig.add_trace(go.Scatter(x=stock_data.index, y=stock_data['RSI'], mode='lines', name='RSI'),
                   row=2, col=1)
+    stock_data['Rel_Per'] = (stock_data['Close']-Stock_Sel[2])*100/Stock_Sel[2]
 
     fig.update_layout(
-        title=f"{Stock_Sel} - RSI Breakout",
+        title=f"{Stock_Sel[0]} - RSI Breakout",
         # xaxis_title="Date",
         yaxis_title="Price (INR)",
-        xaxis2_title="Date",
         yaxis2_title="RSI",
         xaxis_rangeslider_visible=False,
         template="plotly_white",
-        height=600,
-        width=900,
+        height=700,
+        width=1200,
         showlegend=False
     )
 
@@ -221,6 +235,97 @@ def Create_RSI_Chart(stock_data,Stock_Sel):
     fig.update_yaxes(title_text="Price (INR)", side="right", row=1, col=1)
     fig.update_yaxes(title_text="RSI", side="right", row=2, col=1)
     fig.update_xaxes(type='category')
+
+    fig.add_hline(y=Stock_Sel[2], line_dash="dot", line_color="darkgoldenrod", row=1, col=1, line_width=1)  # Price on chart
+    fig.add_hline(y=Stock_Sel[3], line_dash="dot", line_color="darkgoldenrod", row=2, col=1,line_width=1)  # RSI on chart
+    fig.add_vline(x=Stock_Sel[1].strftime('%d-%b'), line_dash="dot", line_color="darkgoldenrod", row=1, col=1,line_width=1)  # Datetime on candlestick
+    fig.add_vline(x=Stock_Sel[1].strftime('%d-%b'), line_dash="dot", line_color="darkgoldenrod", row=2, col=1,line_width=1)  # Datetime on RSI
+    # Add annotations for % change next to price axis
+    buy_price = Stock_Sel[2]
+
+    # Generate ticks for +/- N% from buy_price
+    percent_range = 10    # For example, -10% to +10%
+    step = 2
+    pct_changes = np.arange(-percent_range, percent_range + 1, step)
+    # Compute corresponding prices
+    yticks = list(buy_price * (1 + pct_changes / 100))
+    yticks = [round(x,1) for x in yticks]
+    print(yticks)
+    # Add % annotations aligned with y-ticks
+    for price in yticks:
+        pct = ((price - buy_price) / buy_price) * 100
+        fig.add_annotation(
+            x=Stock_Sel[1].strftime('%d-%b'),  # X-axis at buy date
+            xref="x",
+            y=price,
+            text=f"{pct:+.0f}%",
+            showarrow=False,
+            font=dict(size=10, color="#D3D3D3"),
+            align="left",
+            row=1, col=1
+        )
+    fig.update_yaxes(
+        tickvals=yticks,  # Explicitly set ticks at your % prices
+        showgrid=True,  # Enable gridlines
+        row=1, col=1  # If subplot used, match your row/col
+    )
+    fig.update_xaxes(type='category')
+
+    stock_data['MACD_Norm'] = stock_data['MACD'] *100/ stock_data['EMA26']
+    stock_data['Signal_Norm'] = stock_data['Signal'] *100/ stock_data['EMA26']
+    stock_data['MACD_Hist'] = stock_data['MACD_Norm'] - stock_data['Signal_Norm']
+
+    import matplotlib.pyplot as plt  # For colormap
+    from plotly.graph_objs import Bar
+
+    focus_threshold = 1
+    # Avoid division by zero
+    epsilon = 1e-6
+    colors = []
+    for val in stock_data['MACD_Hist']:
+        if val >= 0:
+            # Use greens, focus intensity scaling to ±1.5 range
+            intensity = min(val / (focus_threshold + epsilon), 1.0)
+            rgba = plt.cm.Greens(intensity)
+        else:
+            intensity = min(abs(val) / (focus_threshold + epsilon), 1.0)
+            rgba = plt.cm.Reds(intensity)
+
+        hex_color = '#%02x%02x%02x' % tuple(int(c * 255) for c in rgba[:3])
+        colors.append(hex_color)
+
+    # Add MACD histogram bars with varying color
+    fig.add_trace(
+        Bar(
+            x=stock_data.index,
+            y=stock_data['MACD_Hist'],
+            marker_color=colors,
+            name='MACD Histogram'
+        ),
+        row=3, col=1
+    )
+
+    # Optional: Add Signal and MACD lines (normalized)
+    fig.add_trace(go.Scatter(
+        x=stock_data.index, y=stock_data['MACD_Norm'],
+        mode='lines', name='MACD (Norm)',
+        line=dict(color='blue', width=1)
+    ), row=3, col=1)
+
+    fig.add_trace(go.Scatter(
+        x=stock_data.index, y=stock_data['Signal_Norm'],
+        mode='lines', name='Signal (Norm)',
+        line=dict(color='red', width=1)
+    ), row=3, col=1)
+    fig.add_vline(x=Stock_Sel[1].strftime('%d-%b'), line_dash="dot", line_color="darkgoldenrod", row=3  , col=1,
+                  line_width=1)  # Datetime on RSI
+
+    fig.update_yaxes(title_text="MACD (Norm)", side="right", row=3, col=1)
+    fig.update_yaxes(range=[-3, 3],
+                     tickvals = [-2,-0.5,0,1.5,3],
+                     row=3, col=1)
+
+
 
     return fig
 
@@ -375,7 +480,7 @@ def Get_Specific_Stock_Price(scrip,dateval,ohlc):
         # print(data)
         return data.values.tolist()[-1]
 
-print(Get_Specific_Stock_Price("^NSEI",ddt.today(),True))
+# print(Get_Specific_Stock_Price("^NSEI",ddt.today(),True))
 
 
 
