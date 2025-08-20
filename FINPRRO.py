@@ -41,7 +41,7 @@ st.code(fr'Index Count = {Adv_Dec[0]}       Advances🚀🟢={Adv_Dec[1]}       
 
 st.code(fr'Avg-Nuetral🟡 = {Adv_Dec[5]}      Avg-Advance🚀🟢={Adv_Dec[3]};       Avg-Declines❗🔴={Adv_Dec[4]};  ')
 
-
+st.write("-------------")
 def style_n_gap(val):
     if val >=0:
         return 'background-color: lightgreen; color: black'
@@ -90,6 +90,6 @@ styled_df = styled_df.style.format(precision=2) \
 st.write(styled_df,use_container_width=True)
 
 if st.session_state.auto_refresh:
-    time.sleep(1)
+    time.sleep(3)
     st.rerun()
 
