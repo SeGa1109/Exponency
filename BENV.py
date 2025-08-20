@@ -12,10 +12,12 @@ from datetime import timedelta
 import requests
 import pandas as pd
 from io import StringIO
+import os
 
 owner = "SeGa1109"
 repo = "Exponency"
-
+headers = {"Authorization": "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",
+           "accept": "application/vnd.github.v3.raw"}
 YFdateform = "%Y-%m-%d"
 C_Date = ddt.now()
 ldir = fr'D:\Exponency\Git'
@@ -471,22 +473,25 @@ def Backtest_RSI(Scrip):
     return Backtestdata,stats
 # RSI_Filter(['JBMA.NS',"WIPRO.NS"],ddt.today())
 
-def Get_Specific_Stock_Price(scrip,dateval,ohlc):
-    if ohlc :
-        # print(dateval)
-        data = yf.Ticker(scrip).history(start=(dateval + dt.timedelta(-4)).strftime(YFdateform),
-                                        end=(dateval + dt.timedelta(1)).strftime(YFdateform))
-        # print(data)
-        data = data.values.tolist()[-1]
-        return round(data[0],2),round(data[1],2),round(data[2],2),round(data[3],2)
-    else:
-        # print(dateval)
-        data = yf.Ticker(scrip).history(start=(dateval + dt.timedelta(-4)).strftime(YFdateform),
-                    end=(dateval + dt.timedelta(1)).strftime(YFdateform))
-        # print(data)
-        return data.values.tolist()[-1]
+def Get_Specific_Stock_Price(scrip,dateval):
 
-# print(Get_Specific_Stock_Price("^NSEI",ddt.today(),True))
+    data = yf.Ticker(scrip).history(start=(dateval + dt.timedelta(-4)).strftime(YFdateform),
+                                    end=(dateval + dt.timedelta(1)).strftime(YFdateform))
+    data = data.values.tolist()[-1]
+    return round(data[0],2),round(data[1],2),round(data[2],2),round(data[3],2)
+
+def Get_Specific_Stock_Close(scrip, dateval):
+
+    data = yf.Ticker(scrip).history(start=(dateval + dt.timedelta(-4)).strftime(YFdateform),
+                                    end=(dateval + dt.timedelta(1)).strftime(YFdateform))
+
+    return data.values.tolist()[-1][3]
+
+
+raw_url = f"https://raw.githubusercontent.com/SeGa1109/Exponency/main/FINPRRO/Scriplist.csv"
+index_list = pd.read_csv(raw_url)
+
+
 
 
 
