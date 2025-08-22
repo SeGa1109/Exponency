@@ -1,6 +1,8 @@
 ﻿YF_Ticker,Index Name
 ^NSEI,Nifty 50
+^INDIAVIX,INDIA VIX
 ^NSEBANK,Nifty Bank
+^CNXFIN,Nifty Finance
 ^CNXIT,Nifty IT
 ^CNXFMCG,Nifty FMCG
 ^CNXPHARMA,Nifty Pharma

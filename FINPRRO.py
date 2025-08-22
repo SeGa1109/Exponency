@@ -37,9 +37,9 @@ def Adv_Dec_Count():
 
 Adv_Dec = Adv_Dec_Count()
 
-st.code(fr'Index Count = {Adv_Dec[0]}       Advances🚀🟢={Adv_Dec[1]}           Declines❗🔴={Adv_Dec[2]}')
+st.code(fr'Index Count = {Adv_Dec[0]}; 🚀🟢={Adv_Dec[1]}; ❗🔴={Adv_Dec[2]}')
 
-st.code(fr'Avg-Nuetral🟡 = {Adv_Dec[5]}      Avg-Advance🚀🟢={Adv_Dec[3]};       Avg-Declines❗🔴={Adv_Dec[4]};  ')
+st.code(fr'Avg-Nuetral🟡 = {Adv_Dec[5]}; Avg-🚀🟢={Adv_Dec[3]}; Avg-❗🔴={Adv_Dec[4]};  ')
 
 st.write("-------------")
 def style_n_gap(val):
