@@ -481,7 +481,7 @@ def Get_Specific_Stock_Price(scrip,dateval):
     return round(data[0],2),round(data[1],2),round(data[2],2),round(data[3],2)
 
 def Get_Specific_Stock_Close(scrip, dateval):
-
+    print(scrip)
     data = yf.Ticker(scrip).history(start=(dateval + dt.timedelta(-4)).strftime(YFdateform),
                                     end=(dateval + dt.timedelta(1)).strftime(YFdateform))
 
