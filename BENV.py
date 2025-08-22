@@ -490,6 +490,7 @@ def Get_Specific_Stock_Close(scrip, dateval):
 
 raw_url = f"https://raw.githubusercontent.com/SeGa1109/Exponency/main/FINPRRO/Scriplist.csv"
 index_list = pd.read_csv(raw_url)
+print(index_list)
 
 
 
