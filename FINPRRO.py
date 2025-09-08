@@ -3,7 +3,7 @@ from BENV import *
 # st.set_page_config(layout="wide")
 st.title('FINPRRO DashBoard')
 
-st.write(fr"Data Extracted @{ddt.now()}")
+st.write(fr"Data Extracted @{ddt.now(ZoneInfo("Asia/Kolkata"))}")
 st.set_page_config(layout="wide")
 pd.set_option('display.max_columns', True)
 st.session_state.auto_refresh = True
