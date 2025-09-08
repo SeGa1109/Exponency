@@ -90,5 +90,5 @@ styled_df = styled_df.style.format(precision=2) \
 st.dataframe(styled_df, height=800)
 
 if st.session_state.auto_refresh:
-    time.sleep(3)
+    time.sleep(1)
     st.rerun()
