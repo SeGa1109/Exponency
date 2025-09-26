@@ -14,7 +14,7 @@ import pandas as pd
 from io import StringIO
 import os
 import pyperclip
-import matplotlib
+# import matplotlib
 import sys
 owner = "SeGa1109"
 repo = "Exponency"
