@@ -13,7 +13,9 @@ import requests
 import pandas as pd
 from io import StringIO
 import os
-
+import pyperclip
+import matplotlib
+import sys
 owner = "SeGa1109"
 repo = "Exponency"
 headers = {"Authorization": "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",
@@ -22,8 +24,8 @@ YFdateform = "%Y-%m-%d"
 C_Date = ddt.now()
 ldir = fr'D:\Exponency\Git'
 def Get_stock_price(scrip, dattim):
-    print(scrip,dattim)
-    print(type(dattim))
+    # print(scrip,dattim)
+    # print(type(dattim))
     if not dattim:
         return 0
     try:
@@ -35,7 +37,7 @@ def Get_stock_price(scrip, dattim):
                 interval="1m"
             )
 
-        # print(data)
+        print(data)
         data.index = pd.to_datetime(data.index)
         data.index = data.index.tz_localize(None)
 
@@ -52,6 +54,8 @@ def Get_stock_price(scrip, dattim):
     except Exception as e:
         print(f"Error: {e}")
         return None
+
+# Get_stock_price("GC=F",ddt.today())
 
 def Get_RSI(scrip, datval):
     period = 14
@@ -113,6 +117,72 @@ def Get_RSI_Data(scrip, datval):
     # print(rsi)
     return rsi.values.tolist()
 
+def compute_stoch_rsi(rsi_series, rsi_length=14, stoch_length=14, k_period=3, d_period=3):
+    # Stochastic RSI
+    min_rsi = rsi_series.rolling(stoch_length).min()
+    max_rsi = rsi_series.rolling(stoch_length).max()
+    stoch_rsi = (rsi_series - min_rsi) / (max_rsi - min_rsi).replace(0, np.nan)
+
+    # %K = SMA of StochRSI
+    k = stoch_rsi.rolling(k_period).mean() * 100
+    # %D = SMA of %K
+    d = k.rolling(d_period).mean()
+    return stoch_rsi * 100, k, d
+
+def Get_Stoch_RSI_Data(scrip, datval):
+    rsi_length = 14
+    stoch_length = 14
+    k_period = 3
+    d_period = 3
+
+    try:
+        start_date = (datval - dt.timedelta(days=300)).strftime(YFdateform)
+        end_date = (datval + dt.timedelta(days=1)).strftime(YFdateform)
+
+        data = yf.Ticker(scrip).history(start=start_date, end=end_date, interval="1d")
+    except:
+        start_date = (datval - dt.timedelta(days=300)).strftime(YFdateform)
+        end_date = (datval + dt.timedelta(days=0)).strftime(YFdateform)
+
+        data = yf.Ticker(scrip).history(start=start_date, end=end_date, interval="1d")
+
+    if data.empty or len(data) < rsi_length:
+        print("No Data")
+        return None
+
+    data.index = pd.to_datetime(data.index).tz_localize(None)
+
+    # Wilder's RSI (TradingView uses this)
+    delta = data['Close'].diff()
+    gain = delta.clip(lower=0)
+    loss = -delta.clip(upper=0)
+
+    avg_gain = gain.ewm(alpha=1/rsi_length, min_periods=rsi_length, adjust=False).mean()
+    avg_loss = loss.ewm(alpha=1/rsi_length, min_periods=rsi_length, adjust=False).mean()
+
+    rs = avg_gain / avg_loss
+    data['rsi'] = 100 - (100 / (1 + rs))
+
+    # Stochastic RSI (TradingView formula)
+    data['StochRSI'], data['%K'], data['%D'] = compute_stoch_rsi(
+        data['rsi'], rsi_length, stoch_length, k_period, d_period)
+
+    data['EMA12'] = data['Close'].ewm(span=12, adjust=False).mean()
+    data['EMA26'] = data['Close'].ewm(span=26, adjust=False).mean()
+    data['MACD'] = data['EMA12'] - data['EMA26']
+    data['Signal'] = data['MACD'].ewm(span=9, adjust=False).mean()
+    data['MACD_Hist'] = data['MACD']-data['Signal']
+    data['MACD_DIF'] = data['MACD_Hist'].diff()
+    # print(data)
+
+    # # Save (optional)
+    # data.to_csv("OP.csv")
+    # os.startfile("OP.csv")  # Windows only
+    return data
+
+
+# Get_Stoch_RSI_Data('WIPRO.NS',ddt.today())
+
 def Max_Price(Scrip, start, end, intvl):
 
     data = yf.Ticker(Scrip).history(start=start, end=end, interval=intvl)
@@ -124,7 +194,7 @@ def Max_Price(Scrip, start, end, intvl):
 # Get_RSI("TCS.NS",ddt.now())
 
 def Fetch_Graph_Data(Scrip,intvl,Chart_Sel):
-    print(type(Scrip))
+    # print(type(Scrip))
     if str(type(Scrip))!= "<class 'list'>":
         if intvl == '1d':
             start_date = (ddt.now() - dt.timedelta(days=300)).strftime(YFdateform)
@@ -185,6 +255,7 @@ def Fetch_Graph_Data(Scrip,intvl,Chart_Sel):
             data['MACD'] = data['EMA12'] - data['EMA26']
             data['Signal'] = data['MACD'].ewm(span=9, adjust=False).mean()
             Datas.append(data)
+            # print(data)
         return Datas
 
 def RSI_Filter(Scriplist,Dateval):
@@ -203,12 +274,134 @@ def RSI_Filter(Scriplist,Dateval):
     # print(master)
     return master
 
-def Create_RSI_Chart(stock_data,Stock_Sel):
-    print(Stock_Sel)
+def Stoch_RSI_Filter(Scriplist,Dateval):
+    master = []
+    for step in Scriplist:
+        try:
+            Data = Get_RSI_Data(step,Dateval)
+            Data = Data[-2:]
+        except:
+            continue
+        on_date_rsi = Data[1]
+        if on_date_rsi != None and on_date_rsi < 35:
+            bf_date_rsi = Data[0]
+            if on_date_rsi > bf_date_rsi:
+                master.append(step)
+
+    return master
+# RSI_Filter(['TCS.NS','WIPRO.NS'])
+
+def Create_RSI_Chart(stock_data,Stock_Sel,chk_dt):
+
     fig = make_subplots(
         rows=3, cols=1, shared_xaxes=True,
         vertical_spacing=0.05,
-        subplot_titles=(f"{Stock_Sel[0]} Candlestick", "RSI", "Normalized MACD Histogram"),
+        subplot_titles=(f"{Stock_Sel[0]} Candlestick - Stoch RSI"),
+        row_heights=[0.6, 0.2, 0.2],
+    )
+    stock_data.index = stock_data.index.strftime('%d-%b')
+    stock_data['MACD_Norm'] = stock_data['MACD'] * 100 / stock_data['EMA26']
+    stock_data['Signal_Norm'] = stock_data['Signal'] * 100 / stock_data['EMA26']
+    stock_data['MACD_Hist'] = stock_data['MACD_Norm'] - stock_data['Signal_Norm']
+    stock_data["Change"] = stock_data["Close"].pct_change() * 100  # % change
+    stock_data['MACD_Diff'] = stock_data['MACD_Hist'].diff()
+    stock_data['K_Diff'] = stock_data['%K'] - stock_data['%D']
+
+    text = [
+        f"{d}<br>"
+        f"Close: {c:.2f}<br>"
+        f"Change: {chg:+.2f}%<br>"
+        f"MACD: {m:+.2f}<br>"
+        f"S_RSI: {R:.2f}<br>"
+        f"SR_Diff: {RDif:+.1f}"
+
+        for d, c, chg,m, R, RDif in zip(stock_data.index, stock_data["Close"], stock_data["Change"],stock_data['MACD_Diff'],stock_data['%K'],stock_data['K_Diff'] )
+    ]
+
+    fig.add_trace(
+    go.Ohlc(
+        x=stock_data.index,
+        open=stock_data['Open'],
+        high=stock_data['High'],
+        low=stock_data['Low'],
+        close=stock_data['Close'],
+        name=Stock_Sel
+    ),
+    row=1, col=1,
+    secondary_y=False)
+
+
+    fig.add_trace(go.Scatter(x=stock_data.index, y=stock_data['%K'], mode='lines', name='K',line_color="#66B2FF"),row=2, col=1)
+
+    fig.add_trace(go.Scatter(x=stock_data.index, y=stock_data['%D'], mode='lines', name='D',line_color="#E57373"),row=2, col=1)
+
+    fig.update_layout(
+        title=f"{Stock_Sel} - Stoch Rsi Break ",
+        yaxis_title="Price (INR)",
+        yaxis2_title="Stoch RSI",
+        xaxis_rangeslider_visible=False,
+        template="plotly_white",
+        height=800,
+        width=1000,
+        showlegend=False,
+        xaxis=dict(showspikes=True, spikemode='across', spikesnap='cursor', showline=True),
+        xaxis2=dict(showspikes=True, spikemode='across', spikesnap='cursor', showline=True),
+        yaxis=dict(showspikes=True, spikemode='across', spikesnap='cursor', showline=True),
+        yaxis2=dict(showspikes=True, spikemode='across', spikesnap='cursor', showline=True),
+        hovermode="x unified"
+
+        )
+
+    fig.add_hline(y=80, line_dash="dash", line_color="yellow", row=2, col=1)
+    fig.add_hline(y=20, line_dash="dash", line_color="yellow", row=2, col=1)
+    fig.update_yaxes(title_text="Price (INR)", side="right", row=1, col=1)
+    fig.update_yaxes(title_text="Stoch RSI", side="right", row=2, col=1)
+    fig.update_xaxes(type='category')
+    fig.add_vline(x=chk_dt.strftime('%d-%b'), line_dash="dot", line_color="darkgoldenrod", row=1, col=1,
+                  line_width=1)  # Datetime on candlestick
+    fig.add_vline(x=chk_dt.strftime('%d-%b'), line_dash="dot", line_color="darkgoldenrod", row=2, col=1,
+                  line_width=1)  # Datetime on RSI
+
+
+    from matplotlib import cm  # For colormap
+    from plotly.graph_objs import Bar
+    ...
+
+    macd_diff = stock_data['MACD_Hist'].diff()
+
+    colors = []
+    for diff in macd_diff:
+        if diff > 0:
+            colors.append("green")
+        elif diff < 0:
+            colors.append("red")
+        else:
+            colors.append("gray")
+
+            # Add MACD histogram bars with varying color
+    fig.add_trace(
+        Bar(
+            x=stock_data.index,
+            y=stock_data['MACD_Hist'],
+            marker_color=colors,
+            name='MACD Histogram'
+        ),
+        row=3, col=1
+    )
+
+    fig.update_yaxes(title_text="MACD (Norm)", side="right", row=3, col=1)
+    fig.update_yaxes(range=[-3, 3],
+                     tickvals=[-2, -0.5, 0, 1.5, 3],
+                     row=3, col=1)
+
+    return fig
+
+def Create_Chart(stock_data,Stock_Sel):
+    # print(Stock_Sel)
+    fig = make_subplots(
+        rows=3, cols=1, shared_xaxes=True,
+        vertical_spacing=0.05,
+        subplot_titles=(f"{Stock_Sel} Candlestick", "RSI", "Normalized MACD Histogram"),
         row_heights=[0.6, 0.2, 0.2],
         specs=[[{"secondary_y": True}], [{}], [{}]]
     )
@@ -219,15 +412,15 @@ def Create_RSI_Chart(stock_data,Stock_Sel):
                                  high=stock_data['High'],
                                  low=stock_data['Low'],
                                  close=stock_data['Close'],
-                                 name=Stock_Sel[0]),secondary_y=False,
+                                 name=Stock_Sel),secondary_y=False,
                   row=1, col=1)
 
     fig.add_trace(go.Scatter(x=stock_data.index, y=stock_data['RSI'], mode='lines', name='RSI'),
                   row=2, col=1)
-    stock_data['Rel_Per'] = (stock_data['Close']-Stock_Sel[2])*100/Stock_Sel[2]
+    # stock_data['Rel_Per'] = (stock_data['Close']-Stock_Sel[2])*100/Stock_Sel[2]
 
     fig.update_layout(
-        title=f"{Stock_Sel[0]} - RSI Breakout",
+        title=f"{Stock_Sel} - RSI Breakout",
         # xaxis_title="Date",
         yaxis_title="Price (INR)",
         yaxis2_title="RSI",
@@ -244,41 +437,6 @@ def Create_RSI_Chart(stock_data,Stock_Sel):
     fig.update_yaxes(title_text="RSI", side="right", row=2, col=1)
     fig.update_xaxes(type='category')
 
-    fig.add_hline(y=Stock_Sel[2], line_dash="dot", line_color="darkgoldenrod", row=1, col=1, line_width=1)  # Price on chart
-    fig.add_hline(y=Stock_Sel[3], line_dash="dot", line_color="darkgoldenrod", row=2, col=1,line_width=1)  # RSI on chart
-    fig.add_vline(x=Stock_Sel[1].strftime('%d-%b'), line_dash="dot", line_color="darkgoldenrod", row=1, col=1,line_width=1)  # Datetime on candlestick
-    fig.add_vline(x=Stock_Sel[1].strftime('%d-%b'), line_dash="dot", line_color="darkgoldenrod", row=2, col=1,line_width=1)  # Datetime on RSI
-    # Add annotations for % change next to price axis
-    buy_price = Stock_Sel[2]
-
-    # Generate ticks for +/- N% from buy_price
-    percent_range = 10    # For example, -10% to +10%
-    step = 2
-    pct_changes = np.arange(-percent_range, percent_range + 1, step)
-    # Compute corresponding prices
-    yticks = list(buy_price * (1 + pct_changes / 100))
-    yticks = [round(x,1) for x in yticks]
-    print(yticks)
-    # Add % annotations aligned with y-ticks
-    for price in yticks:
-        pct = ((price - buy_price) / buy_price) * 100
-        fig.add_annotation(
-            x=Stock_Sel[1].strftime('%d-%b'),  # X-axis at buy date
-            xref="x",
-            y=price,
-            text=f"{pct:+.0f}%",
-            showarrow=False,
-            font=dict(size=10, color="#D3D3D3"),
-            align="left",
-            row=1, col=1
-        )
-    fig.update_yaxes(
-        tickvals=yticks,  # Explicitly set ticks at your % prices
-        showgrid=True,  # Enable gridlines
-        row=1, col=1  # If subplot used, match your row/col
-    )
-    fig.update_xaxes(type='category')
-
     stock_data['MACD_Norm'] = stock_data['MACD'] *100/ stock_data['EMA26']
     stock_data['Signal_Norm'] = stock_data['Signal'] *100/ stock_data['EMA26']
     stock_data['MACD_Hist'] = stock_data['MACD_Norm'] - stock_data['Signal_Norm']
@@ -286,7 +444,7 @@ def Create_RSI_Chart(stock_data,Stock_Sel):
     import matplotlib.pyplot as plt  # For colormap
     from plotly.graph_objs import Bar
 
-    focus_threshold = 1
+    focus_threshold = 0.5
     # Avoid division by zero
     epsilon = 1e-6
     colors = []
@@ -325,14 +483,11 @@ def Create_RSI_Chart(stock_data,Stock_Sel):
         mode='lines', name='Signal (Norm)',
         line=dict(color='red', width=1)
     ), row=3, col=1)
-    fig.add_vline(x=Stock_Sel[1].strftime('%d-%b'), line_dash="dot", line_color="darkgoldenrod", row=3  , col=1,
-                  line_width=1)  # Datetime on RSI
 
     fig.update_yaxes(title_text="MACD (Norm)", side="right", row=3, col=1)
     fig.update_yaxes(range=[-3, 3],
-                     tickvals = [-2,-0.5,0,1.5,3],
+                     tickvals = [-0.5,0,1,1.5],
                      row=3, col=1)
-
 
 
     return fig
@@ -473,21 +628,29 @@ def Backtest_RSI(Scrip):
     return Backtestdata,stats
 # RSI_Filter(['JBMA.NS',"WIPRO.NS"],ddt.today())
 
+
+def Get_Specific_Stock_Close(scrip, dateval):
+    # print(scrip,dateval)
+    data = yf.Ticker(scrip).history(start=(dateval + dt.timedelta(-4)).strftime(YFdateform),
+                                    end=(dateval + dt.timedelta(1)).strftime(YFdateform),interval="1m")
+    # print(data)
+    # data.to_csv('OP.CSV')
+    # os.system('OP.CSV')
+
+    if data.empty:
+        print(f"No data found for {scrip} on {dateval}")
+        return None  # or np.nan
+
+    # safely get the last close value
+    return data.iloc[-1]['Close']
+
 def Get_Specific_Stock_Price(scrip,dateval):
 
     data = yf.Ticker(scrip).history(start=(dateval + dt.timedelta(-4)).strftime(YFdateform),
                                     end=(dateval + dt.timedelta(1)).strftime(YFdateform))
     data = data.values.tolist()[-1]
     return round(data[0],2),round(data[1],2),round(data[2],2),round(data[3],2)
-
-def Get_Specific_Stock_Close(scrip, dateval):
-    print(scrip)
-    data = yf.Ticker(scrip).history(start=(dateval + dt.timedelta(-4)).strftime(YFdateform),
-                                    end=(dateval + dt.timedelta(1)).strftime(YFdateform))
-
-    return data.values.tolist()[-1][3]
-
-
+# Get_Specific_Stock_Close('TCS.NS', ddt.today())
 raw_url = f"https://raw.githubusercontent.com/SeGa1109/Exponency/main/FINPRRO/Scriplist.csv"
 index_list = pd.read_csv(raw_url)
 # print(index_list)
