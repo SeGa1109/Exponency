@@ -90,7 +90,7 @@ df = st.session_state.data
 styled_df = (
     df.style
       .format(precision=2)
-      .applymap(style_gap, subset=['Gap'])
+      .map(style_gap, subset=['Gap'])
       .apply(
           lambda row: [
               style_index_name(row)
