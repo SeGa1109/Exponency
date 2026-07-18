@@ -85,14 +85,24 @@ def style_index_name(row):
     return f'background-color: rgb({r},{g},{b}); color: black;'
 
 
-styled_df = st.session_state.data
-styled_df = styled_df.style.format(precision=2) \
-    .applymap(style_gap, subset=['Gap']) \
-    .apply(
-        lambda row: [style_index_name(row) if col in ['Current_LTP', 'Open', 'High', 'Low', 'Prev_Close','High_Avg','Low_Avg'] else ''
-                     for col in styled_df.columns],
-        axis=1
-    )
+df = st.session_state.data
+
+styled_df = (
+    df.style
+      .format(precision=2)
+      .applymap(style_gap, subset=['Gap'])
+      .apply(
+          lambda row: [
+              style_index_name(row)
+              if col in ['Current_LTP', 'Open', 'High', 'Low',
+                         'Prev_Close', 'High_Avg', 'Low_Avg']
+              else ''
+              for col in row.index          # or df.columns
+          ],
+          axis=1
+      )
+)
+
 st.dataframe(styled_df, height=800)
 
 if st.session_state.auto_refresh:
