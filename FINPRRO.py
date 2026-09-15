@@ -1,27 +1,36 @@
 from BENV import *
 from zoneinfo import ZoneInfo
 # st.set_page_config(layout="wide")
-st.title('FINPRRO DashBoard')
+st.title('FINPRO DashBoard')
 
-st.write(fr"Data Extracted @{ddt.now(ZoneInfo("Asia/Kolkata"))}")
+with st.form("datetime_form"):
+
+    selected_datetime = st.datetime_input(
+        "Select Date & Time",
+        format="DD/MM/YYYY"
+    )
+
+    ok = st.form_submit_button("OK")
+st.write(fr"Data Extracted @{selected_datetime}")
 st.set_page_config(layout="wide")
 pd.set_option('display.max_columns', True)
 # st.session_state.auto_refresh = False
 
-def DataPull(df):
-    # print("S1")
-    df['Prev_Close'] = df.apply(lambda row : Get_Specific_Stock_Close(row['YF_Ticker'],ddt.today()+ dt.timedelta(-1)),axis = 1)
-    df[["Open","High","Low","Current_LTP"]] = df.apply(lambda row : Get_Specific_Stock_Price(row['YF_Ticker'], ddt.today()),axis=1, result_type="expand")
+def DataPull(df,timeframe):
+    #print(fr"{timeframe+ dt.timedelta(-1),"-",timeframe}")
+    df['Prev_Close'] = df.apply(lambda row : Get_Specific_Stock_Close(row['YF_Ticker'],timeframe - dt.timedelta(1)),axis = 1)
+    df[["Open","High","Low","Current_LTP"]] = df.apply(lambda row : Get_Specific_Stock_Price(row['YF_Ticker'], timeframe),axis=1, result_type="expand")
     df['Gap'] = df["Open"]-df["Prev_Close"]
     df["High_Avg"] = (df['Prev_Close']+df['High'])/2
     df["Low_Avg"] = (df['Prev_Close']+df['Low'])/2
     return df[['Index Name','Prev_Close','Gap','Open','Current_LTP','Low','Low_Avg','High', 'High_Avg',]]
 
-st.session_state.data = DataPull(index_list)
+st.session_state.data = DataPull(index_list,selected_datetime)
 
 def Adv_Dec_Count():
     data = st.session_state.data
     data = data.drop(data.index[0])
+    data = data.drop(data.index[1])
     # print(data)
     op=[]
     count = len(data)
@@ -37,13 +46,9 @@ def Adv_Dec_Count():
 
 Adv_Dec = Adv_Dec_Count()
 
-st.code(fr'Index Count = {Adv_Dec[0]}; 🚀🟢={Adv_Dec[1]}; ❗🔴={Adv_Dec[2]}')
+st.code(fr'Index Count = {Adv_Dec[0]}; 🚀🟢={Adv_Dec[1]}; ❗🔴={Adv_Dec[2]}   ')
 
 st.code(fr'Average :: 🟡={Adv_Dec[5]}; 🚀🟢={Adv_Dec[3]}; ❗🔴={Adv_Dec[4]};  ')
-if st.toggle("Auto Refresh"):
-    st.session_state.auto_refresh = True
-else:
-    st.session_state.auto_refresh = False
 
 
 
@@ -105,6 +110,4 @@ styled_df = (
 
 st.dataframe(styled_df, height=800)
 
-if st.session_state.auto_refresh:
-    time.sleep(1)
-    st.rerun()
+

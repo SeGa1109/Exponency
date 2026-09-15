@@ -13,7 +13,7 @@ import requests
 import pandas as pd
 from io import StringIO
 import os
-import pyperclip
+# import pyperclip
 # import matplotlib
 import sys
 owner = "SeGa1109"
@@ -630,30 +630,64 @@ def Backtest_RSI(Scrip):
 
 
 def Get_Specific_Stock_Close(scrip, dateval):
-    # print(scrip,dateval)
-    data = yf.Ticker(scrip).history(start=(dateval + dt.timedelta(-4)).strftime(YFdateform),
-                                    end=(dateval + dt.timedelta(1)).strftime(YFdateform),interval="1m")
-    # print(data)
-    # data.to_csv('OP.CSV')
-    # os.system('OP.CSV')
+    #print(dateval)
+
+    data = yf.Ticker(scrip).history(
+        start=(dateval - dt.timedelta(days=5)).strftime(YFdateform),
+        end=(dateval + dt.timedelta(days=1)).strftime(YFdateform),
+        interval="1m"
+    )
 
     if data.empty:
-        print(f"No data found for {scrip} on {dateval}")
-        return None  # or np.nan
+        print(f"No data found for {scrip} before {dateval}")
+        return None
 
-    # safely get the last close value
-    return data.iloc[-1]['Close']
+    # Last available trading day BEFORE dateval
+    return round(float(data.iloc[-1]['Close']), 2)
 
-def Get_Specific_Stock_Price(scrip,dateval):
+def Get_Specific_Stock_Price(scrip, dateval):
 
-    data = yf.Ticker(scrip).history(start=(dateval + dt.timedelta(-4)).strftime(YFdateform),
-                                    end=(dateval + dt.timedelta(1)).strftime(YFdateform))
-    data = data.values.tolist()[-1]
-    return round(data[0],2),round(data[1],2),round(data[2],2),round(data[3],2)
+    # Keep the hour and minute
+    dateval = pd.Timestamp(dateval)
+
+    data = yf.Ticker(scrip).history(
+        start=(dateval - dt.timedelta(days=4)).strftime(YFdateform),
+        end=(dateval + dt.timedelta(days=1)).strftime(YFdateform),
+        interval="1m"
+    )
+
+    if data.empty:
+        print(f"No data found for {scrip} around {dateval}")
+        return None, None, None, None
+
+    # Filter exact date + hour + minute
+    data = data[
+        (data.index.date == dateval.date()) &
+        (data.index.hour == dateval.hour) &
+        (data.index.minute == dateval.minute)
+    ]
+
+    if data.empty:
+        print(f"No intraday data found for {scrip} at {dateval}")
+        return None, None, None, None
+
+    # There should normally be exactly one row
+    row = data.iloc[0]
+
+    #print(f"{scrip} | {dateval} | {row['Close']}")
+
+    return (
+        round(float(row["Open"]), 2),
+        round(float(row["High"]), 2),
+        round(float(row["Low"]), 2),
+        round(float(row["Close"]), 2)
+    )
 # Get_Specific_Stock_Close('TCS.NS', ddt.today())
 raw_url = f"https://raw.githubusercontent.com/SeGa1109/Exponency/main/FINPRRO/Scriplist.csv"
 index_list = pd.read_csv(raw_url)
 # print(index_list)
+
+
 
 
 

@@ -1,0 +1,3 @@
+*.pyc
+.agents/skills/developing-with-streamlit
+Test.py
