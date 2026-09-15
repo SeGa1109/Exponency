@@ -2,11 +2,13 @@ from BENV import *
 from zoneinfo import ZoneInfo
 # st.set_page_config(layout="wide")
 st.title('FINPRO DashBoard')
-
+ist = ZoneInfo("Asia/Kolkata")
+if "selected_datetime" not in st.session_state:
+    st.session_state.selected_datetime = ddt.now(ist).replace(tzinfo=None)
 with st.form("datetime_form"):
 
     selected_datetime = st.datetime_input(
-        "Select Date & Time",
+        "Select Date & Time",value=st.session_state.selected_datetime,
         format="DD/MM/YYYY"
     )
 
