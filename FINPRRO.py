@@ -89,7 +89,7 @@ def style_index_name(row):
         g = int(g1 + (g2 - g1) * pct)
         b = int(b1 + (b2 - b1) * pct)
 
-        return f'background-color: rgb({r},{g},{b}); color: black;
+        return f'background-color: rgb({r},{g},{b}); color: black'
     except:pass
     
 
