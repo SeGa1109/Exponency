@@ -24,9 +24,7 @@ def DataPull(df,timeframe):
     df[["Open","High","Low","Current_LTP"]] = df.apply(lambda row : Get_Specific_Stock_Price(row['YF_Ticker'], timeframe),axis=1, result_type="expand")
     df['Gap'] = df["Open"]-df["Prev_Close"]
     df["High_Avg"] = (df['Prev_Close']+df['High'])/2
-
     df["Avg"] = (df['Open']+df['Current_LTP'])/2
-
     df["Low_Avg"] = (df['Prev_Close']+df['Low'])/2
     return df[['Index Name','Prev_Close','Gap','Open','Current_LTP','Low','Low_Avg','High', 'High_Avg',"Avg"]]
 
@@ -70,21 +68,22 @@ def style_index_name(row):
     low_avg = row['Low_Avg']
 
     cap = 0.01  # 2% cap
-
-    if current > high_avg:
-        # % above high_avg, capped at 2%
-        pct = min((current - high_avg) / high_avg, cap) / cap
-        # Light green → Dark green
-        r1, g1, b1 = (200, 230, 201)  # light green
-        r2, g2, b2 = (46, 125, 50)    # dark green
-    elif current < low_avg:
-        # % below low_avg, capped at 2%
-        pct = min((low_avg - current) / low_avg, cap) / cap
-        # Light red → Dark red
-        r1, g1, b1 = (255, 205, 210)  # light red
-        r2, g2, b2 = (198, 40, 40)    # dark red
-    else:
-        return 'background-color: #FFFACD; color: black;'  # neutral yellow
+    try:
+        if current > high_avg:
+            # % above high_avg, capped at 2%
+            pct = min((current - high_avg) / high_avg, cap) / cap
+            # Light green → Dark green
+            r1, g1, b1 = (200, 230, 201)  # light green
+            r2, g2, b2 = (46, 125, 50)    # dark green
+        elif current < low_avg:
+            # % below low_avg, capped at 2%
+            pct = min((low_avg - current) / low_avg, cap) / cap
+            # Light red → Dark red
+            r1, g1, b1 = (255, 205, 210)  # light red
+            r2, g2, b2 = (198, 40, 40)    # dark red
+        else:
+            return 'background-color: #FFFACD; color: black;'  # neutral yellow
+    except:pass
 
     # Linear interpolation
     r = int(r1 + (r2 - r1) * pct)
