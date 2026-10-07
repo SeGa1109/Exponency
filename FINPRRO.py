@@ -83,14 +83,15 @@ def style_index_name(row):
             r2, g2, b2 = (198, 40, 40)    # dark red
         else:
             return 'background-color: #FFFACD; color: black;'  # neutral yellow
+   
+        # Linear interpolation
+        r = int(r1 + (r2 - r1) * pct)
+        g = int(g1 + (g2 - g1) * pct)
+        b = int(b1 + (b2 - b1) * pct)
+
+        return f'background-color: rgb({r},{g},{b}); color: black;
     except:pass
-
-    # Linear interpolation
-    r = int(r1 + (r2 - r1) * pct)
-    g = int(g1 + (g2 - g1) * pct)
-    b = int(b1 + (b2 - b1) * pct)
-
-    return f'background-color: rgb({r},{g},{b}); color: black;'
+    
 
 
 df = st.session_state.data
