@@ -113,5 +113,3 @@ styled_df = (
 )
 
 st.dataframe(styled_df, height=800)
-
-

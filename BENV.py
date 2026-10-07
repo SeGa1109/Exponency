@@ -661,19 +661,17 @@ def Get_Specific_Stock_Price(scrip, dateval):
         return None, None, None, None
 
     # Filter exact date + hour + minute
-    data = data[
-        (data.index.date == dateval.date()) &
-        (data.index.hour == dateval.hour) &
-        (data.index.minute == dateval.minute)
-    ]
-
-    if data.empty:
-        print(f"No intraday data found for {scrip} at {dateval}")
-        return None, None, None, None
-
-    # There should normally be exactly one row
-    row = data.iloc[0]
-
+    filtered_data = data[
+            (data.index.date == dateval.date()) &
+            (data.index.hour == dateval.hour) &
+            (data.index.minute == dateval.minute)
+        ]
+    
+    if not filtered_data.empty:
+        row = filtered_data.iloc[0]
+    elif not data.empty:
+        print(f"Exact match not found for {scrip} at {dateval}. Using latest available data from {data.index[-1]}.")
+        row = data.iloc[-1]
     #print(f"{scrip} | {dateval} | {row['Close']}")
 
     return (
@@ -687,6 +685,8 @@ raw_url = f"https://raw.githubusercontent.com/SeGa1109/Exponency/main/FINPRRO/Sc
 index_list = pd.read_csv(raw_url)
 # print(index_list)
 
+
+Get_Specific_Stock_Price('TCS.NS', ddt.today())
 
 
 
