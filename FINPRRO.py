@@ -24,8 +24,11 @@ def DataPull(df,timeframe):
     df[["Open","High","Low","Current_LTP"]] = df.apply(lambda row : Get_Specific_Stock_Price(row['YF_Ticker'], timeframe),axis=1, result_type="expand")
     df['Gap'] = df["Open"]-df["Prev_Close"]
     df["High_Avg"] = (df['Prev_Close']+df['High'])/2
+
+    df["Avg"] = (df['Open']+df['Current_LTP'])/2
+
     df["Low_Avg"] = (df['Prev_Close']+df['Low'])/2
-    return df[['Index Name','Prev_Close','Gap','Open','Current_LTP','Low','Low_Avg','High', 'High_Avg',]]
+    return df[['Index Name','Prev_Close','Gap','Open','Current_LTP','Low','Low_Avg','High', 'High_Avg',"Avg"]]
 
 st.session_state.data = DataPull(index_list,selected_datetime)
 
@@ -51,7 +54,6 @@ Adv_Dec = Adv_Dec_Count()
 st.code(fr'Index Count = {Adv_Dec[0]}; 🚀🟢={Adv_Dec[1]}; ❗🔴={Adv_Dec[2]}   ')
 
 st.code(fr'Average :: 🟡={Adv_Dec[5]}; 🚀🟢={Adv_Dec[3]}; ❗🔴={Adv_Dec[4]};  ')
-
 
 
 st.write("-------------")
@@ -102,7 +104,7 @@ styled_df = (
           lambda row: [
               style_index_name(row)
               if col in ['Current_LTP', 'Open', 'High', 'Low',
-                         'Prev_Close', 'High_Avg', 'Low_Avg']
+                         'Prev_Close', 'High_Avg', 'Low_Avg','Avg']
               else ''
               for col in row.index          # or df.columns
           ],
